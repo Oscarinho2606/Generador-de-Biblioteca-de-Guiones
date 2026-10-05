@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generador de biblioteca de guiones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/generador.css">
+</head>
+<body>
+
+<header class="barra">
+  <div class="marca"><i></i><div><strong>Generador de biblioteca</strong><span id="resumen"></span></div></div>
+  <div class="espacio"></div>
+  <details class="menu" id="menu">
+    <summary class="btn btn-sec">Respaldo y ajustes</summary>
+    <div class="menu-lista">
+      <button type="button" data-menu="respaldo">Descargar respaldo (.json)</button>
+      <button type="button" data-menu="restaurar">Restaurar desde respaldo…</button>
+      <hr>
+      <button type="button" data-menu="anterior">Importar biblioteca anterior (.html)…</button>
+      <button type="button" data-menu="ajustes">Nombre en la portada…</button>
+    </div>
+  </details>
+  <button class="btn btn-sec" id="btnVista" type="button">Vista previa</button>
+  <button class="btn btn-principal" id="btnGenerar" type="button">Generar HTML</button>
+</header>
+<div class="franja" id="franjaRespaldo" hidden>
+  <span id="franjaTexto"></span>
+  <button class="btn btn-sec btn-mini" type="button" data-menu="respaldo">Descargar respaldo</button>
+</div>
+
+<div class="layout">
+  <aside>
+    <form id="formAgente" class="caja" autocomplete="off" novalidate>
+      <h2>Agregar agente</h2>
+      <label class="campo" for="agNombre">Nombre completo</label>
+      <input id="agNombre" maxlength="120" placeholder="Ej. Laura Valentina Olave Niño">
+      <label class="campo" for="agCedula">Cédula</label>
+      <input id="agCedula" inputmode="numeric" maxlength="20" placeholder="Ej. 1012345678">
+      <button class="btn btn-principal ancho" type="submit">Agregar agente</button>
+      <div class="error" id="agError" role="alert"></div>
+    </form>
+    <div class="buscar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="qAgentes" type="search" placeholder="Buscar agente" aria-label="Buscar agente">
+    </div>
+    <nav class="agentes" id="listaAgentes" aria-label="Agentes"></nav>
+  </aside>
+  <main id="vista"></main>
+</div>
+
+<!-- Editor de guion -->
+<dialog id="dlgGuion" class="dlg dlg-ancho">
+  <form id="formGuion" method="dialog" novalidate>
+    <div class="dlg-cabeza"><h2 id="dlgGuionTitulo">Nuevo guion</h2><button class="cerrar" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+    <div class="dlg-cuerpo">
+      <label class="campo" for="gTitulo">Título <small>(es lo que se ve en el desplegable)</small></label>
+      <input id="gTitulo" maxlength="160" placeholder="Ej. Saludo">
+      <div class="fila">
+        <div class="col">
+          <label class="campo" for="gCategoria">Categoría</label>
+          <input id="gCategoria" list="listaCategorias" maxlength="80" placeholder="Ej. Saludo y despedida">
+          <datalist id="listaCategorias"></datalist>
+        </div>
+        <div class="col">
+          <span class="campo">Canal</span>
+          <div class="segmento" role="radiogroup" aria-label="Canal">
+            <label><input type="radio" name="gCanal" value="A" checked><span>Chat y redes</span></label>
+            <label><input type="radio" name="gCanal" value="C"><span>Solo chat</span></label>
+            <label><input type="radio" name="gCanal" value="R"><span>Solo redes</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="contenido-cabeza">
+        <span class="campo">Contenido</span>
+        <p class="ayuda">Deja una <b>línea en blanco</b> entre párrafos: cada párrafo se puede copiar por separado y el botón copia el bloque completo. Escribe <code>xxxx</code> donde el agente debe completar un dato, y <code>{nombre}</code> o <code>{nombre_completo}</code> para que aparezca el nombre de cada agente.</p>
+      </div>
+      <div id="gBloques"></div>
+      <div class="acciones-bloques">
+        <button class="btn btn-sec btn-mini" type="button" data-agregar="c">+ Otra opción para el cliente</button>
+        <button class="btn btn-sec btn-mini" type="button" data-agregar="i">+ Nota interna</button>
+      </div>
+
+      <div class="asignar">
+        <div class="asignar-cabeza">
+          <span class="campo">¿Qué agentes tendrán este guion?</span>
+          <label class="todos"><input type="checkbox" id="gTodos"> Todos</label>
+        </div>
+        <div id="gAgentes" class="lista-checks"></div>
+      </div>
+      <div class="error" id="gError" role="alert"></div>
+    </div>
+    <div class="dlg-pie">
+      <button class="btn btn-sec" type="button" data-cerrar>Cancelar</button>
+      <button class="btn btn-principal" type="submit">Guardar guion</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Editar agente -->
+<dialog id="dlgAgente" class="dlg">
+  <form id="formEditarAgente" method="dialog" novalidate>
+    <div class="dlg-cabeza"><h2>Editar agente</h2><button class="cerrar" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+    <div class="dlg-cuerpo">
+      <label class="campo" for="eaNombre">Nombre completo</label>
+      <input id="eaNombre" maxlength="120">
+      <label class="campo" for="eaCedula">Cédula</label>
+      <input id="eaCedula" inputmode="numeric" maxlength="20">
+      <label class="campo" for="eaCorto">Nombre para el saludo <small>(lo que ve en “Hola, …” y lo que reemplaza a {nombre})</small></label>
+      <input id="eaCorto" maxlength="60">
+      <div class="error" id="eaError" role="alert"></div>
+    </div>
+    <div class="dlg-pie">
+      <button class="btn btn-peligro" type="button" id="eaEliminar">Eliminar agente</button>
+      <div class="espacio"></div>
+      <button class="btn btn-sec" type="button" data-cerrar>Cancelar</button>
+      <button class="btn btn-principal" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Confirmación genérica -->
+<dialog id="dlgConfirmar" class="dlg">
+  <div class="dlg-cabeza"><h2 id="cfTitulo"></h2><button class="cerrar" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="dlg-cuerpo" id="cfTexto"></div>
+  <div class="dlg-pie" id="cfBotones"></div>
+</dialog>
+
+<!-- Ajustes -->
+<dialog id="dlgAjustes" class="dlg">
+  <form id="formAjustes" method="dialog" novalidate>
+    <div class="dlg-cabeza"><h2>Nombre en la portada</h2><button class="cerrar" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+    <div class="dlg-cuerpo">
+      <label class="campo" for="ajMarca">Texto que ven los agentes arriba de la pantalla de ingreso</label>
+      <input id="ajMarca" maxlength="80" placeholder="Ej. Contact Center · Banco Agrario">
+    </div>
+    <div class="dlg-pie">
+      <button class="btn btn-sec" type="button" data-cerrar>Cancelar</button>
+      <button class="btn btn-principal" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="fileRespaldo" accept=".json,application/json" hidden>
+<input type="file" id="fileAnterior" accept=".html,.htm,text/html" hidden>
+<div id="aviso" role="status" aria-live="polite"></div>
+
+<script src="js/visor.js"></script>
+<script src="js/generador.js"></script>
+</body>
+</html>

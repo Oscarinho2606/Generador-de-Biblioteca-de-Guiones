@@ -1,0 +1,3 @@
+# Respaldos (contienen cédulas) y bibliotecas generadas
+*.json
+biblioteca_guiones*.html
